@@ -2685,37 +2685,42 @@ function testWebRequest() {
     chrome.webRequest.OnResponseStartedOptions.EXTRA_HEADERS === "extraHeaders";
     chrome.webRequest.OnResponseStartedOptions.RESPONSE_HEADERS === "responseHeaders";
 
-    chrome.webRequest.OnSendHeadersOptions.BLOCKING === "blocking";
     chrome.webRequest.OnSendHeadersOptions.EXTRA_HEADERS === "extraHeaders";
+    chrome.webRequest.OnSendHeadersOptions.REQUEST_HEADERS === "requestHeaders";
 
-    chrome.webRequest.RessourceType.CSP_REPORT === "csp_report";
-    chrome.webRequest.RessourceType.FONT === "font";
-    chrome.webRequest.RessourceType.IMAGE === "image";
-    chrome.webRequest.RessourceType.MAIN_FRAME === "main_frame";
-    chrome.webRequest.RessourceType.MEDIA === "media";
-    chrome.webRequest.RessourceType.OBJECT === "object";
-    chrome.webRequest.RessourceType.OTHER === "other";
-    chrome.webRequest.RessourceType.PING === "ping";
-    chrome.webRequest.RessourceType.SCRIPT === "script";
-    chrome.webRequest.RessourceType.STYLESHEET === "stylesheet";
-    chrome.webRequest.RessourceType.SUB_FRAME === "sub_frame";
-    chrome.webRequest.RessourceType.WEBBUNDLE === "webbundle";
-    chrome.webRequest.RessourceType.WEBSOCKET === "websocket";
-    chrome.webRequest.RessourceType.XMLHTTPREQUEST === "xmlhttprequest";
+    chrome.webRequest.ResourceType.CSP_REPORT === "csp_report";
+    chrome.webRequest.ResourceType.FONT === "font";
+    chrome.webRequest.ResourceType.IMAGE === "image";
+    chrome.webRequest.ResourceType.MAIN_FRAME === "main_frame";
+    chrome.webRequest.ResourceType.MEDIA === "media";
+    chrome.webRequest.ResourceType.OBJECT === "object";
+    chrome.webRequest.ResourceType.OTHER === "other";
+    chrome.webRequest.ResourceType.PING === "ping";
+    chrome.webRequest.ResourceType.SCRIPT === "script";
+    chrome.webRequest.ResourceType.STYLESHEET === "stylesheet";
+    chrome.webRequest.ResourceType.SUB_FRAME === "sub_frame";
+    chrome.webRequest.ResourceType.WEBBUNDLE === "webbundle";
+    chrome.webRequest.ResourceType.WEBSOCKET === "websocket";
+    chrome.webRequest.ResourceType.XMLHTTPREQUEST === "xmlhttprequest";
 
     chrome.webRequest.handlerBehaviorChanged(() => {}); // $ExpectType void
     chrome.webRequest.handlerBehaviorChanged(); // $ExpectType Promise<void>
     // @ts-expect-error
     chrome.webRequest.handlerBehaviorChanged(() => {}).then(() => {});
 
-    chrome.webRequest.onActionIgnored.addListener((details) => {
-        details; // $ExpectType object
+    chrome.webRequest.onActionIgnored.addListener(
+        ({ requestId, action }) => {
+            requestId; // $ExpectType string
+            action; // $ExpectType "redirect" | "request_headers" | "response_headers" | "auth_credentials"
+        },
+    );
+    chrome.webRequest.onActionIgnored.removeListener(({ requestId, action }) => {
+        requestId; // $ExpectType string
+        action; // $ExpectType "redirect" | "request_headers" | "response_headers" | "auth_credentials"
     });
-    chrome.webRequest.onActionIgnored.removeListener((details) => {
-        details; // $ExpectType object
-    });
-    chrome.webRequest.onActionIgnored.hasListener((details) => {
-        details; // $ExpectType object
+    chrome.webRequest.onActionIgnored.hasListener(({ requestId, action }) => {
+        requestId; // $ExpectType string
+        action; // $ExpectType "redirect" | "request_headers" | "response_headers" | "auth_credentials"
     });
     chrome.webRequest.onActionIgnored.hasListeners();
 

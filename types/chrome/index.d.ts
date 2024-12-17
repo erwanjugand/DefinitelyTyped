@@ -3728,8 +3728,12 @@ declare namespace chrome {
             originAndPathMatches?: string | undefined;
         }
 
-        export interface BaseEvent<T extends Function> {
-            addListener(callback: T, filter?: webRequest.RequestFilter): void;
+        export interface Event<T extends Function> {
+            /**
+             * Registers an event listener callback to an event.
+             * @param callback Called when an event occurs. The parameters of this function depend on the type of event.
+             */
+            addListener(callback: T): void;
             /**
              * Returns currently registered rules.
              * @param callback Called with registered rules.
@@ -3788,16 +3792,16 @@ declare namespace chrome {
         }
 
         /** An object which allows the addition and removal of listeners for a Chrome event. */
-        interface Event<T extends Function> extends BaseEvent<T> {
-            /**
-             * Registers an event listener callback to an event.
-             * @param callback Called when an event occurs. The parameters of this function depend on the type of event.
-             */
-            addListener(callback: T): void;
-        }
-        export interface EventWithRequiredFilterInAddListener<T extends Function> extends BaseEvent<T> {
-            addListener(callback: T, filter: webRequest.RequestFilter): void;
-        }
+        // interface Event<T extends Function> extends BaseEvent<T> {
+        //     /**
+        //      * Registers an event listener callback to an event.
+        //      * @param callback Called when an event occurs. The parameters of this function depend on the type of event.
+        //      */
+        //     addListener(callback: T): void;
+        // }
+        // export interface EventWithRequiredFilterInAddListener<T extends Function, U> extends BaseEvent<T> {
+        //     addListener(callback: T, filter: webRequest.RequestFilter, extraInfoSpec?: U): void;
+        // }
 
         /** Description of a declarative rule for handling events. */
         export interface Rule {
@@ -11959,86 +11963,254 @@ declare namespace chrome {
     ////////////////////
     /**
      * Use the chrome.webRequest API to observe and analyze traffic and to intercept, block, or modify requests in-flight.
-     * Permissions:  "webRequest", host permissions
-     * @since Chrome 17
+     * Permissions:  "webRequest", "webRequestBlocking", "webRequestAuthProvider", host permissions
      */
     export namespace webRequest {
-        /** How the requested resource will be used. */
-        export type ResourceType =
-            | "main_frame"
-            | "sub_frame"
-            | "stylesheet"
-            | "script"
-            | "image"
-            | "font"
-            | "object"
-            | "xmlhttprequest"
-            | "ping"
-            | "csp_report"
-            | "media"
-            | "websocket"
-            | "other";
-
-        export interface AuthCredentials {
-            username: string;
-            password: string;
-        }
-
-        /** An HTTP Header, represented as an object containing a key and either a value or a binaryValue. */
-        export interface HttpHeader {
-            name: string;
-            value?: string | undefined;
-            binaryValue?: ArrayBuffer | undefined;
+        interface WebRequestEvent<T extends Function, U> extends chrome.events.Event<T> {
+            addListener(callback: T, filter: webRequest.RequestFilter, extraInfoSpec?: U): void;
         }
 
         /** Returns value for event handlers that have the 'blocking' extraInfoSpec applied. Allows the event handler to modify network requests. */
         export interface BlockingResponse {
-            /** Optional. If true, the request is cancelled. Used in onBeforeRequest, this prevents the request from being sent. */
-            cancel?: boolean | undefined;
+            /** Only used as a response to the onAuthRequired event. If set, the request is made using the supplied credentials. */
+            authCredentials?: {
+                username: string;
+                password: string;
+            };
+
             /**
-             * Optional.
-             * Only used as a response to the onBeforeRequest and onHeadersReceived events. If set, the original request is prevented from being sent/completed and is instead redirected to the given URL. Redirections to non-HTTP schemes such as data: are allowed. Redirects initiated by a redirect action use the original request method for the redirect, with one exception: If the redirect is initiated at the onHeadersReceived stage, then the redirect will be issued using the GET method.
+             * If true, the request is cancelled. This prevents the request from being sent.
+             * This can be used as a response to the onBeforeRequest, onBeforeSendHeaders, onHeadersReceived and onAuthRequired events.
              */
-            redirectUrl?: string | undefined;
+            cancel?: boolean;
+
             /**
-             * Optional.
-             * Only used as a response to the onHeadersReceived event. If set, the server is assumed to have responded with these response headers instead. Only return responseHeaders if you really want to modify the headers in order to limit the number of conflicts (only one extension may modify responseHeaders for each request).
+             * Only used as a response to the onBeforeRequest and onHeadersReceived events.
+             * If set, the original request is prevented from being sent/completed and is instead redirected to the given URL.
+             * Redirections to non-HTTP schemes such as `data:` are allowed.
+             * Redirects initiated by a redirect action use the original request method for the redirect, with one exception: If the redirect is initiated at the onHeadersReceived stage, then the redirect will be issued using the GET method.
+             * Redirects from URLs with `ws://` and `wss://` schemes are **ignored**.
              */
-            responseHeaders?: HttpHeader[] | undefined;
-            /** Optional. Only used as a response to the onAuthRequired event. If set, the request is made using the supplied credentials. */
-            authCredentials?: AuthCredentials | undefined;
+            redirectUrl?: string;
+
             /**
-             * Optional.
-             * Only used as a response to the onBeforeSendHeaders event. If set, the request is made with these request headers instead.
+             * Only used as a response to the onBeforeSendHeaders event.
+             * If set, the request is made with these request headers instead.
              */
-            requestHeaders?: HttpHeader[] | undefined;
+            requestHeaders?: HttpHeaders | undefined;
+
+            /**
+             * Only used as a response to the onHeadersReceived event.
+             * If set, the server is assumed to have responded with these response headers instead.
+             * Only return `responseHeaders` if you really want to modify the headers in order to limit the number of conflicts (only one extension may modify `responseHeaders` for each request).
+             */
+            responseHeaders?: HttpHeaders | undefined;
+        }
+
+        /**
+         * Contains data passed within form data. For urlencoded form it is stored as string if data is utf-8 string and as ArrayBuffer otherwise.
+         * For form-data it is ArrayBuffer. If form-data represents uploading file, it is string with filename, if the filename is provided.
+         * @since Chrome 66
+         */
+        export type FormDataItem = ArrayBuffer | string;
+
+        /** An array of HTTP headers. Each header is represented as a dictionary containing the keys `name` and either `value` or `binaryValue`. */
+        export type HttpHeaders = {
+            /** Value of the HTTP header if it cannot be represented by UTF-8, stored as individual byte values (0..255). */
+            binaryValue?: number[];
+            /** Name of the HTTP header. */
+            name: string;
+            /** Value of the HTTP header if it can be represented by UTF-8. */
+            value?: string;
+        }[];
+
+        /** @since Chrome 70 */
+        export enum IgnoredActionType {
+            REDIRECT = "redirect",
+            REQUEST_HEADERS = "request_headers",
+            RESPONSE_HEADERS = "response_headers",
+            AUTH_CREDENTIALS = "auth_credentials",
+        }
+
+        /** @since Chrome 44 */
+        export enum OnAuthRequiredOptions {
+            /** Specifies that the response headers should be included in the event. */
+            RESPONSE_HEADERS = "responseHeaders",
+            /** Specifies the request is blocked until the callback function returns. */
+            BLOCKING = "blocking",
+            /** Specifies that the callback function is handled asynchronously. */
+            ASYNC_BLOCKING = "asyncBlocking",
+            /** Specifies that headers can violate Cross-Origin Resource Sharing (CORS). */
+            EXTRA_HEADERS = "extraHeaders",
+        }
+
+        /** @since Chrome 44 */
+        export enum OnBeforeRedirectOptions {
+            /** Specifies that the response headers should be included in the event. */
+            RESPONSE_HEADERS = "responseHeaders",
+            /** Specifies that headers can violate Cross-Origin Resource Sharing (CORS). */
+            EXTRA_HEADERS = "extraHeaders",
+        }
+
+        /** @since Chrome 44 */
+        export enum OnBeforeRequestOptions {
+            /** Specifies the request is blocked until the callback function returns. */
+            BLOCKING = "blocking",
+            /** Specifies that the request body should be included in the event. */
+            REQUEST_BODY = "requestBody",
+            /** Specifies that headers can violate Cross-Origin Resource Sharing (CORS). */
+            EXTRA_HEADERS = "extraHeaders",
+        }
+
+        /** @since Chrome 44 */
+        export enum OnBeforeSendHeadersOptions {
+            /** Specifies that the request header should be included in the event. */
+            REQUEST_HEADERS = "requestHeaders",
+            /** Specifies the request is blocked until the callback function returns. */
+            BLOCKING = "blocking",
+            /** Specifies that headers can violate Cross-Origin Resource Sharing (CORS). */
+            EXTRA_HEADERS = "extraHeaders",
+        }
+
+        /** @since Chrome 44 */
+        export enum OnCompletedOptions {
+            /** Specifies that the response headers should be included in the event. */
+            RESPONSE_HEADERS = "responseHeaders",
+            /** Specifies that headers can violate Cross-Origin Resource Sharing (CORS). */
+            EXTRA_HEADERS = "extraHeaders",
+        }
+
+        /** @since Chrome 79 */
+        export enum OnErrorOccurredOptions {
+            EXTRA_HEADERS = "extraHeaders",
+        }
+
+        /** @since Chrome 44 */
+        export enum OnHeadersReceivedOptions {
+            /** Specifies the request is blocked until the callback function returns. */
+            BLOCKING = "blocking",
+            /** Specifies that the response headers should be included in the event. */
+            RESPONSE_HEADERS = "responseHeaders",
+            /** Specifies that headers can violate Cross-Origin Resource Sharing (CORS). */
+            EXTRA_HEADERS = "extraHeaders",
+        }
+
+        /** @since Chrome 44 */
+        export enum OnResponseStartedOptions {
+            /** Specifies that the response headers should be included in the event. */
+            RESPONSE_HEADERS = "responseHeaders",
+            /** Specifies that headers can violate Cross-Origin Resource Sharing (CORS). */
+            EXTRA_HEADERS = "extraHeaders",
+        }
+
+        /** @since Chrome 44 */
+        export enum OnSendHeadersOptions {
+            /** Specifies that the request header should be included in the event. */
+            REQUEST_HEADERS = "requestHeaders",
+            /** Specifies that headers can violate Cross-Origin Resource Sharing (CORS). */
+            EXTRA_HEADERS = "extraHeaders",
         }
 
         /** An object describing filters to apply to webRequest events. */
         export interface RequestFilter {
-            /** Optional. */
-            tabId?: number | undefined;
-            /**
-             * A list of request types. Requests that cannot match any of the types will be filtered out.
-             */
-            types?: ResourceType[] | undefined;
+            tabId?: number;
+            /** A list of request types. Requests that cannot match any of the types will be filtered out. */
+            types?: `${ResourceType}`[];
             /** A list of URLs or URL patterns. Requests that cannot match any of the URLs will be filtered out. */
             urls: string[];
+            windowId?: number;
+        }
 
-            /** Optional. */
-            windowId?: number | undefined;
+        /** @since Chrome 44 */
+        export enum ResourceType {
+            /** Specifies the resource as the main frame. */
+            MAIN_FRAME = "main_frame",
+            /** Specifies the resource as a sub frame. */
+            SUB_FRAME = "sub_frame",
+            /** Specifies the resource as a stylesheet. */
+            STYLESHEET = "stylesheet",
+            /** Specifies the resource as a script. */
+            SCRIPT = "script",
+            /** Specifies the resource as an image. */
+            IMAGE = "image",
+            /** Specifies the resource as a font. */
+            FONT = "font",
+            /** Specifies the resource as an object. */
+            OBJECT = "object",
+            /** Specifies the resource as an XMLHttpRequest. */
+            XMLHTTPREQUEST = "xmlhttprequest",
+            /** Specifies the resource as a ping. */
+            PING = "ping",
+            /** Specifies the resource as a Content Security Policy (CSP) report. */
+            CSP_REPORT = "csp_report",
+            /** Specifies the resource as a media object. */
+            MEDIA = "media",
+            /** Specifies the resource as a WebSocket. */
+            WEBSOCKET = "websocket",
+            /** Specifies the resource as a WebBundle. */
+            WEBBUNDLE = "webbundle",
+            /** Specifies the resource as a type not included in the listed types. */
+            OTHER = "other",
+        }
+
+        /** Contains data uploaded in a URL request. */
+        export interface UploadData {
+            /** An ArrayBuffer with a copy of the data. */
+            bytes?: ArrayBuffer;
+            /** A string with the file's path and name. */
+            file?: string;
         }
 
         /**
-         * Contains data uploaded in a URL request.
-         * @since Chrome 23
+         * The maximum number of times that `handlerBehaviorChanged` can be called per 10 minute sustained interval.
+         * `handlerBehaviorChanged` is an expensive function call that shouldn't be called often.
          */
-        export interface UploadData {
-            /** Optional. An ArrayBuffer with a copy of the data. */
-            bytes?: ArrayBuffer | undefined;
-            /** Optional. A string with the file's path and name. */
-            file?: string | undefined;
-        }
+        export const MAX_HANDLER_BEHAVIOR_CHANGED_CALLS_PER_10_MINUTES: 20;
+
+        /**
+         * Needs to be called when the behavior of the webRequest handlers has changed to prevent incorrect handling due to caching.
+         * This function call is expensive. Don't call it often.
+         * Can return its result via Promise in Manifest V3 or later since Chrome 116.
+         */
+        export function handlerBehaviorChanged(): Promise<void>;
+        export function handlerBehaviorChanged(callback: () => void): void;
+
+        /**
+         * Fired when an extension's proposed modification to a network request is ignored. This happens in case of conflicts with other extensions.
+         * @since Chrome 70
+         */
+        const onActionIgnored: chrome.events.Event<
+            (details: {
+                /** The proposed action which was ignored. */
+                action: `${IgnoredActionType}`;
+                /** The ID of the request. Request IDs are unique within a browser session. As a result, they could be used to relate different events of the same request. */
+                requestId: string;
+            }) => void
+        >;
+
+        const onAuthRequired: WebRequestEvent<((details: {
+            /** The server requesting authentication. */
+            challenger: {
+                host: string;
+                port: number;
+            }
+            /**
+             * The UUID of the document making the request.
+             * @since Chrome 106
+             */
+            documentId: string;
+            /**
+             * The lifecycle the document is in.
+             * @since Chrome 106
+             */
+            documentLifecycle: DocumentLifecycle;
+        frameId: number;
+
+
+
+        }) => void), `${OnAuthRequiredOptions}`[]>
+
+        /////////////////
 
         export interface WebRequestBody {
             /** Optional. Errors when obtaining request body data. */
@@ -12089,7 +12261,7 @@ declare namespace chrome {
 
         export interface WebRequestHeadersDetails extends WebRequestDetails {
             /** Optional. The HTTP request headers that are going to be sent out with this request. */
-            requestHeaders?: HttpHeader[] | undefined;
+            requestHeaders?: HttpHeaders | undefined;
             documentId: string;
             documentLifecycle: DocumentLifecycle;
             frameType: FrameType;
@@ -12126,7 +12298,7 @@ declare namespace chrome {
 
         export interface WebResponseHeadersDetails extends WebResponseDetails {
             /** Optional. The HTTP response headers that have been received with this response. */
-            responseHeaders?: HttpHeader[] | undefined;
+            responseHeaders?: HttpHeaders | undefined;
             method: string /** standard HTTP method i.e. GET, POST, PUT, etc. */;
         }
 
@@ -12240,15 +12412,6 @@ declare namespace chrome {
 
         export interface WebResponseErrorEvent extends _WebResponseHeadersEvent<WebResponseErrorDetails> {}
 
-        /**
-         * The maximum number of times that handlerBehaviorChanged can be called per 10 minute sustained interval. handlerBehaviorChanged is an expensive function call that shouldn't be called often.
-         * @since Chrome 23
-         */
-        export var MAX_HANDLER_BEHAVIOR_CHANGED_CALLS_PER_10_MINUTES: number;
-
-        /** Needs to be called when the behavior of the webRequest handlers has changed to prevent incorrect handling due to caching. This function call is expensive. Don't call it often. */
-        export function handlerBehaviorChanged(callback?: Function): void;
-
         /** Fired when a request is about to occur. */
         export var onBeforeRequest: WebRequestBodyEvent;
         /** Fired before sending an HTTP request, once the request headers are available. This may occur after a TCP connection is made to the server, but before any HTTP data is sent. */
@@ -12265,7 +12428,7 @@ declare namespace chrome {
          *
          * Requires the `webRequestAuthProvider` permission.
          */
-        export var onAuthRequired: WebAuthenticationChallengeEvent;
+        // export var onAuthRequired: WebAuthenticationChallengeEvent;
         /** Fired when the first byte of the response body is received. For HTTP requests, this means that the status line and response headers are available. */
         export var onResponseStarted: WebResponseCacheEvent;
         /** Fired when a server-initiated redirect is about to occur. */
