@@ -173,52 +173,6 @@ function printPage() {
     });
 }
 
-// https://developer.chrome.com/extensions/examples/extensions/catblock/background.js
-function catBlock() {
-    var loldogs: string[];
-    chrome.webRequest.onBeforeRequest.addListener(
-        function(info) {
-            console.log("Cat intercepted: " + info.url);
-            // Redirect the lolcat request to a random loldog URL.
-            var i = Math.round(Math.random() * loldogs.length);
-            return { redirectUrl: loldogs[i] };
-        },
-        // filters
-        {
-            urls: ["https://i.chzbgr.com/*"],
-            types: ["image"],
-        },
-        // extraInfoSpec
-        ["blocking"],
-    );
-}
-
-// webNavigation.onSendHeaders.addListener example
-function webRequestAddListenerMandatoryFilters() {
-    // @ts-expect-error
-    chrome.webRequest.onBeforeRequest.addListener(info => {});
-
-    chrome.webRequest.onSendHeaders.addListener(details => {
-        console.log(
-            (details.requestHeaders ?? [])[0].name,
-            details.documentId,
-            details.documentLifecycle,
-            details.frameType,
-            details.frameId,
-            details.initiator,
-            details.parentDocumentId,
-            details.parentFrameId,
-            details.requestId,
-            details.tabId,
-            details.timeStamp,
-            details.type,
-            details.url,
-        );
-    }, {
-        urls: ["<all_urls>"],
-    }, ["requestHeaders"]);
-}
-
 // webNavigation.onBeforeNavigate.addListener example
 function beforeRedditNavigation() {
     chrome.webNavigation.onBeforeNavigate.addListener(
@@ -286,22 +240,6 @@ function executeScriptFramed() {
 
     chrome.tabs.executeScript(tabId, { frameId, code });
     chrome.tabs.insertCSS(tabId, { frameId, code });
-}
-
-// for chrome.tabs.TAB_ID_NONE
-function realTabsOnly() {
-    chrome.webRequest.onBeforeRequest.addListener(
-        function(details) {
-            if (details.tabId === chrome.tabs.TAB_ID_NONE) {
-                console.log("Request not related to a tab. %o", details);
-                return;
-            }
-            // ...
-        },
-        {
-            urls: ["<all_urls>"],
-        },
-    );
 }
 
 // contrived settings example
@@ -2698,4 +2636,227 @@ function testPrintingMetrics() {
         jobInfo; // $ExpectType PrintJobInfo
     });
     chrome.printingMetrics.onPrintJobFinished.hasListeners();
+}
+
+// https://developer.chrome.com/docs/extensions/reference/api/webRequest
+function testWebRequest() {
+    const filter: chrome.webRequest.RequestFilter = {
+        tabId: 1,
+        urls: ["https://example.com/*"],
+        types: ["main_frame"],
+        windowId: 2,
+    };
+    const extraInfoSpec = ["blocking", "requestHeaders", "responseHeaders"];
+
+    const blockingResponse = {
+        cancel: true,
+        redirectUrl: "https://example.com",
+        requestHeaders: [{ name: "name", value: "value" }],
+    };
+
+    chrome.webRequest.MAX_HANDLER_BEHAVIOR_CHANGED_CALLS_PER_10_MINUTES === 20;
+
+    chrome.webRequest.IgnoredActionType.AUTH_CREDENTIALS === "auth_credentials";
+    chrome.webRequest.IgnoredActionType.REDIRECT === "redirect";
+    chrome.webRequest.IgnoredActionType.REQUEST_HEADERS === "request_headers";
+    chrome.webRequest.IgnoredActionType.RESPONSE_HEADERS === "response_headers";
+
+    chrome.webRequest.OnAuthRequiredOptions.ASYNC_BLOCKING === "asyncBlocking";
+    chrome.webRequest.OnAuthRequiredOptions.BLOCKING === "blocking";
+    chrome.webRequest.OnAuthRequiredOptions.EXTRA_HEADERS === "extraHeaders";
+    chrome.webRequest.OnAuthRequiredOptions.RESPONSE_HEADERS === "responseHeaders";
+
+    chrome.webRequest.OnBeforeRedirectOptions.EXTRA_HEADERS === "extraHeaders";
+    chrome.webRequest.OnBeforeRedirectOptions.RESPONSE_HEADERS === "responseHeaders";
+
+    chrome.webRequest.OnBeforeSendHeadersOptions.BLOCKING === "blocking";
+    chrome.webRequest.OnBeforeSendHeadersOptions.EXTRA_HEADERS === "extraHeaders";
+    chrome.webRequest.OnBeforeSendHeadersOptions.REQUEST_HEADERS === "requestHeaders";
+
+    chrome.webRequest.OnCompletedOptions.EXTRA_HEADERS === "extraHeaders";
+    chrome.webRequest.OnCompletedOptions.RESPONSE_HEADERS === "responseHeaders";
+
+    chrome.webRequest.OnErrorOccurredOptions.EXTRA_HEADERS === "extraHeaders";
+
+    chrome.webRequest.OnHeadersReceivedOptions.BLOCKING === "blocking";
+    chrome.webRequest.OnHeadersReceivedOptions.EXTRA_HEADERS === "extraHeaders";
+    chrome.webRequest.OnHeadersReceivedOptions.RESPONSE_HEADERS === "responseHeaders";
+
+    chrome.webRequest.OnResponseStartedOptions.EXTRA_HEADERS === "extraHeaders";
+    chrome.webRequest.OnResponseStartedOptions.RESPONSE_HEADERS === "responseHeaders";
+
+    chrome.webRequest.OnSendHeadersOptions.BLOCKING === "blocking";
+    chrome.webRequest.OnSendHeadersOptions.EXTRA_HEADERS === "extraHeaders";
+
+    chrome.webRequest.RessourceType.CSP_REPORT === "csp_report";
+    chrome.webRequest.RessourceType.FONT === "font";
+    chrome.webRequest.RessourceType.IMAGE === "image";
+    chrome.webRequest.RessourceType.MAIN_FRAME === "main_frame";
+    chrome.webRequest.RessourceType.MEDIA === "media";
+    chrome.webRequest.RessourceType.OBJECT === "object";
+    chrome.webRequest.RessourceType.OTHER === "other";
+    chrome.webRequest.RessourceType.PING === "ping";
+    chrome.webRequest.RessourceType.SCRIPT === "script";
+    chrome.webRequest.RessourceType.STYLESHEET === "stylesheet";
+    chrome.webRequest.RessourceType.SUB_FRAME === "sub_frame";
+    chrome.webRequest.RessourceType.WEBBUNDLE === "webbundle";
+    chrome.webRequest.RessourceType.WEBSOCKET === "websocket";
+    chrome.webRequest.RessourceType.XMLHTTPREQUEST === "xmlhttprequest";
+
+    chrome.webRequest.handlerBehaviorChanged(() => {}); // $ExpectType void
+    chrome.webRequest.handlerBehaviorChanged(); // $ExpectType Promise<void>
+    // @ts-expect-error
+    chrome.webRequest.handlerBehaviorChanged(() => {}).then(() => {});
+
+    chrome.webRequest.onActionIgnored.addListener((details) => {
+        details; // $ExpectType object
+    });
+    chrome.webRequest.onActionIgnored.removeListener((details) => {
+        details; // $ExpectType object
+    });
+    chrome.webRequest.onActionIgnored.hasListener((details) => {
+        details; // $ExpectType object
+    });
+    chrome.webRequest.onActionIgnored.hasListeners();
+
+    chrome.webRequest.onAuthRequired.addListener(
+        (details, asyncCallback) => {
+            details; // $ExpectType WebAuthenticationChallengeDetails
+            if (!asyncCallback) return;
+            asyncCallback(blockingResponse); // $ExpectType void
+        },
+        filter,
+        extraInfoSpec,
+    );
+    chrome.webRequest.onAuthRequired.removeListener((details, asyncCallback) => {
+        details; // $ExpectType WebAuthenticationChallengeDetails
+        if (!asyncCallback) return;
+        asyncCallback(blockingResponse); // $ExpectType void
+    });
+    chrome.webRequest.onAuthRequired.hasListener((details, asyncCallback) => {
+        details; // $ExpectType WebAuthenticationChallengeDetails
+        if (!asyncCallback) return;
+        asyncCallback(blockingResponse); // $ExpectType void
+    });
+    chrome.webRequest.onAuthRequired.hasListeners();
+
+    chrome.webRequest.onBeforeRedirect.addListener(
+        (details) => {
+            details; // $ExpectType WebRedirectionResponseDetails
+        },
+        filter,
+        extraInfoSpec,
+    );
+    chrome.webRequest.onBeforeRedirect.removeListener((details) => {
+        details; // $ExpectType WebRedirectionResponseDetails
+    });
+    chrome.webRequest.onBeforeRedirect.hasListener((details) => {
+        details; // $ExpectType WebRedirectionResponseDetails
+    });
+    chrome.webRequest.onBeforeRedirect.hasListeners();
+
+    chrome.webRequest.onBeforeRequest.addListener(
+        (details) => {
+            details; // $ExpectType WebRequestBodyDetails
+        },
+        filter,
+        extraInfoSpec,
+    );
+    chrome.webRequest.onBeforeRequest.removeListener((details) => {
+        details; // $ExpectType WebRequestBodyDetails
+    });
+    chrome.webRequest.onBeforeRequest.hasListener((details) => {
+        details; // $ExpectType WebRequestBodyDetails
+    });
+    chrome.webRequest.onBeforeRequest.hasListeners();
+
+    chrome.webRequest.onBeforeSendHeaders.addListener(
+        (details) => {
+            details; // $ExpectType WebRequestHeadersDetails
+        },
+        filter,
+        extraInfoSpec,
+    );
+    chrome.webRequest.onBeforeSendHeaders.removeListener((details) => {
+        details; // $ExpectType WebRequestHeadersDetails
+    });
+    chrome.webRequest.onBeforeSendHeaders.hasListener((details) => {
+        details; // $ExpectType WebRequestHeadersDetails
+    });
+    chrome.webRequest.onBeforeSendHeaders.hasListeners();
+
+    chrome.webRequest.onCompleted.addListener(
+        (details) => {
+            details; // $ExpectType WebResponseCacheDetails
+        },
+        filter,
+        extraInfoSpec,
+    );
+    chrome.webRequest.onCompleted.removeListener((details) => {
+        details; // $ExpectType WebResponseCacheDetails
+    });
+    chrome.webRequest.onCompleted.hasListener((details) => {
+        details; // $ExpectType WebResponseCacheDetails
+    });
+    chrome.webRequest.onCompleted.hasListeners();
+
+    chrome.webRequest.onErrorOccurred.addListener(
+        (details) => {
+            details; // $ExpectType WebResponseErrorDetails
+        },
+        filter,
+        extraInfoSpec,
+    );
+    chrome.webRequest.onErrorOccurred.removeListener((details) => {
+        details; // $ExpectType WebResponseErrorDetails
+    });
+    chrome.webRequest.onErrorOccurred.hasListener((details) => {
+        details; // $ExpectType WebResponseErrorDetails
+    });
+    chrome.webRequest.onErrorOccurred.hasListeners();
+
+    chrome.webRequest.onHeadersReceived.addListener(
+        (details) => {
+            details; // $ExpectType WebResponseHeadersDetails
+        },
+        filter,
+        extraInfoSpec,
+    );
+    chrome.webRequest.onHeadersReceived.removeListener((details) => {
+        details; // $ExpectType WebResponseHeadersDetails
+    });
+    chrome.webRequest.onHeadersReceived.hasListener((details) => {
+        details; // $ExpectType WebResponseHeadersDetails
+    });
+    chrome.webRequest.onHeadersReceived.hasListeners();
+
+    chrome.webRequest.onResponseStarted.addListener(
+        (details) => {
+            details; // $ExpectType WebResponseCacheDetails
+        },
+        filter,
+        extraInfoSpec,
+    );
+    chrome.webRequest.onResponseStarted.removeListener((details) => {
+        details; // $ExpectType WebResponseCacheDetails
+    });
+    chrome.webRequest.onResponseStarted.hasListener((details) => {
+        details; // $ExpectType WebResponseCacheDetails
+    });
+    chrome.webRequest.onResponseStarted.hasListeners();
+
+    chrome.webRequest.onSendHeaders.addListener(
+        (details) => {
+            details; // $ExpectType WebRequestHeadersDetails
+        },
+        filter,
+        extraInfoSpec,
+    );
+    chrome.webRequest.onSendHeaders.removeListener((details) => {
+        details; // $ExpectType WebRequestHeadersDetails
+    });
+    chrome.webRequest.onSendHeaders.hasListener((details) => {
+        details; // $ExpectType WebRequestHeadersDetails
+    });
+    chrome.webRequest.onSendHeaders.hasListeners();
 }
