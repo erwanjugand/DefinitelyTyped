@@ -1456,36 +1456,37 @@ function testDevtoolsNetwork() {
     });
 }
 
-function testAssistiveWindow() {
-    chrome.input.ime.setAssistiveWindowProperties({
-        contextID: 0,
-        properties: {
-            type: "undo",
-            visible: true,
-        },
-    });
+// https://developer.chrome.com/docs/extensions/reference/api/input/ime
+function testInputIme() {
+    // chrome.input.ime.setAssistiveWindowProperties({
+    //     contextID: 0,
+    //     properties: {
+    //         type: "undo",
+    //         visible: true,
+    //     },
+    // });
 
-    chrome.input.ime.setAssistiveWindowButtonHighlighted({
-        contextID: 0,
-        buttonID: "undo",
-        windowType: "undo",
-        announceString: "Undo button highlighted",
-        highlighted: true,
-    });
+    // chrome.input.ime.setAssistiveWindowButtonHighlighted({
+    //     contextID: 0,
+    //     buttonID: "undo",
+    //     windowType: "undo",
+    //     announceString: "Undo button highlighted",
+    //     highlighted: true,
+    // });
 
-    chrome.input.ime.setAssistiveWindowButtonHighlighted({
-        contextID: 0,
-        buttonID: "undo",
-        windowType: "undo",
-        highlighted: false,
-    });
+    // chrome.input.ime.setAssistiveWindowButtonHighlighted({
+    //     contextID: 0,
+    //     buttonID: "undo",
+    //     windowType: "undo",
+    //     highlighted: false,
+    // });
 
-    chrome.input.ime.onAssistiveWindowButtonClicked.addListener(
-        (details: chrome.input.ime.AssistiveWindowButtonClickedDetails) => {
-            details;
-            console.log(`${details.buttonID} button in ${details.windowType} window clicked`);
-        },
-    );
+    // chrome.input.ime.onAssistiveWindowButtonClicked.addListener(
+    //     (details: chrome.input.ime.AssistiveWindowButtonClickedDetails) => {
+    //         details;
+    //         console.log(`${details.buttonID} button in ${details.windowType} window clicked`);
+    //     },
+    // );
 }
 
 // https://developer.chrome.com/extensions/omnibox#types
