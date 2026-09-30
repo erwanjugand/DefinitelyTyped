@@ -5,6 +5,27 @@
 // Helpers
 type SetRequired<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K>>;
 type SetPartial<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+type RequireExactlyOne<T, Keys extends keyof T = keyof T> =
+    & Omit<T, Keys>
+    & { [K in Keys]: Required<Pick<T, K>> & Partial<Record<Exclude<Keys, K>, never>> }[Keys];
+type RequireAtLeastOne<T, Keys extends keyof T = keyof T> =
+    & Omit<T, Keys>
+    & { [K in Keys]: Required<Pick<T, K>> & Partial<Pick<T, Exclude<Keys, K>>> }[Keys];
+type RequireAtMostOne<T, Keys extends keyof T = keyof T> =
+    | (Omit<T, Keys> & Partial<Record<Keys, never>>)
+    | (Omit<T, Keys> & { [K in Keys]: Required<Pick<T, K>> & Partial<Record<Exclude<Keys, K>, never>> }[Keys]);
+type KeysOfUnion<T> = T extends unknown ? keyof T : never;
+type TaggedUnion<
+    Tag extends PropertyKey,
+    Common extends object,
+    Variants extends Record<PropertyKey, object>,
+> = {
+    [Value in keyof Variants]:
+        & Common
+        & { [Key in Tag]: Value extends string ? `${Value}` : Value }
+        & Variants[Value]
+        & Partial<Record<Exclude<KeysOfUnion<Variants[keyof Variants]>, keyof Variants[Value]>, undefined>>;
+}[keyof Variants];
 
 ////////////////////
 // Global object
