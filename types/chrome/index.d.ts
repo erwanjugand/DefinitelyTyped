@@ -33,6 +33,10 @@ declare namespace chrome {
     type RequireAtLeastOne<T, K extends keyof T> =
         & Flatten<Omit<T, K>>
         & { [P in K]-?: Flatten<SetRequired<Pick<T, K>, P>> }[K];
+    /** Exactly one of `K` must be set, the others must be omitted or `undefined`. */
+    type RequireExactlyOne<T, K extends keyof T> =
+        & Flatten<Omit<T, K>>
+        & { [P in K]-?: Flatten<SetRequired<Pick<T, P>, P> & { [Q in keyof Pick<T, Exclude<K, P>>]?: undefined }> }[K];
 
     ////////////////////
     // Accessibility Features
@@ -10312,27 +10316,16 @@ declare namespace chrome {
                 }
             );
 
-        type CSSInjection =
-            & {
-                /** The style origin for the injection. Defaults to `'AUTHOR'`. */
-                origin?: `${StyleOrigin}` | undefined;
-                /** Details specifying the target into which to insert the CSS. */
-                target: InjectionTarget;
-            }
-            & (
-                | {
-                    /** A string containing the CSS to inject. Exactly one of `files` and `css` must be specified. */
-                    css: string;
-                    /** The path of the CSS files to inject, relative to the extension's root directory. Exactly one of `files` and `css` must be specified. */
-                    files?: never | undefined;
-                }
-                | {
-                    /** A string containing the CSS to inject. Exactly one of `files` and `css` must be specified. */
-                    css?: never | undefined;
-                    /** The path of the CSS files to inject, relative to the extension's root directory. Exactly one of `files` and `css` must be specified. */
-                    files: string[];
-                }
-            );
+        type CSSInjection = RequireExactlyOne<{
+            /** A string containing the CSS to inject. Exactly one of `files` and `css` must be specified. */
+            css?: string | undefined;
+            /** The path of the CSS files to inject, relative to the extension's root directory. Exactly one of `files` and `css` must be specified. */
+            files?: string[] | undefined;
+            /** The style origin for the injection. Defaults to `'AUTHOR'`. */
+            origin?: `${StyleOrigin}` | undefined;
+            /** Details specifying the target into which to insert the CSS. */
+            target: InjectionTarget;
+        }, "css" | "files">;
 
         type ScriptInjection<Args extends any[], Result> =
             & {
@@ -15366,17 +15359,12 @@ declare namespace chrome {
             worldId?: string | undefined;
         }
 
-        type ScriptSource = {
+        type ScriptSource = RequireExactlyOne<{
             /** A string containing the JavaScript code to inject. */
-            code: string;
+            code?: string | undefined;
             /** The path of the JavaScript file to inject relative to the extension's root directory. */
-            file?: undefined;
-        } | {
-            /** A string containing the JavaScript code to inject. */
-            code?: undefined;
-            /** The path of the JavaScript file to inject relative to the extension's root directory. */
-            file: string;
-        };
+            file?: string | undefined;
+        }, "code" | "file">;
 
         /**
          * Configures the `USER_SCRIPT` execution environment.
