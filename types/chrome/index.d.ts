@@ -1,10 +1,6 @@
 /// <reference path="./har-format/index.d.ts" />
 /// <reference path="./chrome-cast/index.d.ts" />
 
-// Helpers
-type SetRequired<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K>>;
-type SetPartial<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
-
 ////////////////////
 // Global object
 ////////////////////
@@ -25,6 +21,15 @@ interface Window {
 declare var browser: typeof chrome;
 
 declare namespace chrome {
+    // Internal helpers
+
+    /** Makes `K` required, and not `undefined`. */
+    type SetRequired<T, K extends keyof T> = Omit<T, K> & { [P in K]-?: Exclude<T[P], undefined> };
+    /** Makes `K` optional. */
+    type SetPartial<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+    /** Expands an intersection into one object type, for readable hovers and errors. */
+    type Flatten<T> = { [P in keyof T]: T[P] } & {};
+
     ////////////////////
     // Accessibility Features
     ////////////////////

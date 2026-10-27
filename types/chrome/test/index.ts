@@ -8687,3 +8687,19 @@ async function testBrowser() {
     window.browser.tabs.create({ url: "https://example.test" }); // $ExpectType Promise<void>
     globalThis.browser.tabs.create({ url: "https://example.test" }); // $ExpectType Promise<void>
 }
+
+// Internal helpers must not be exposed, neither globally nor on `chrome`
+function testInternalHelpers() {
+    // @ts-expect-error
+    type GlobalSetRequired = SetRequired<{ a?: string }, "a">;
+    // @ts-expect-error
+    type ChromeSetRequired = chrome.SetRequired<{ a?: string }, "a">;
+    // @ts-expect-error
+    type GlobalSetPartial = SetPartial<{ a: string }, "a">;
+    // @ts-expect-error
+    type ChromeSetPartial = chrome.SetPartial<{ a: string }, "a">;
+    // @ts-expect-error
+    type GlobalFlatten = Flatten<{ a: string }>;
+    // @ts-expect-error
+    type ChromeFlatten = chrome.Flatten<{ a: string }>;
+}
