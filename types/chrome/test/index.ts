@@ -8702,4 +8702,8 @@ function testInternalHelpers() {
     type GlobalFlatten = Flatten<{ a: string }>;
     // @ts-expect-error
     type ChromeFlatten = chrome.Flatten<{ a: string }>;
+    // @ts-expect-error
+    type GlobalRequireAtLeastOne = RequireAtLeastOne<{ a?: string }, "a">;
+    // @ts-expect-error
+    type ChromeRequireAtLeastOne = chrome.RequireAtLeastOne<{ a?: string }, "a">;
 }

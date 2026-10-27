@@ -29,6 +29,10 @@ declare namespace chrome {
     type SetPartial<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
     /** Expands an intersection into one object type, for readable hovers and errors. */
     type Flatten<T> = { [P in keyof T]: T[P] } & {};
+    /** At least one of `K` must be set. */
+    type RequireAtLeastOne<T, K extends keyof T> =
+        & Flatten<Omit<T, K>>
+        & { [P in K]-?: Flatten<SetRequired<Pick<T, K>, P>> }[K];
 
     ////////////////////
     // Accessibility Features
@@ -195,25 +199,14 @@ declare namespace chrome {
             popup: string;
         }
 
-        type TabIconDetails =
-            & {
-                /** Limits the change to when a particular tab is selected. Automatically resets when the tab is closed. */
-                tabId?: number | null | undefined;
-            }
-            & (
-                | {
-                    /** Either an ImageData object or a dictionary {size -> ImageData} representing an icon to be set. If the icon is specified as a dictionary, the image used is chosen depending on the screen's pixel density. If the number of image pixels that fit into one screen space unit equals `scale`, then an image with size `scale` \* n is selected, where _n_ is the size of the icon in the UI. At least one image must be specified. Note that 'details.imageData = foo' is equivalent to 'details.imageData = {'16': foo}' */
-                    imageData: ImageData | { [index: number]: ImageData };
-                    /** Either a relative image path or a dictionary {size -> relative image path} pointing to an icon to be set. If the icon is specified as a dictionary, the image used is chosen depending on the screen's pixel density. If the number of image pixels that fit into one screen space unit equals `scale`, then an image with size `scale` \* n is selected, where _n_ is the size of the icon in the UI. At least one image must be specified. Note that 'details.path = foo' is equivalent to 'details.path = {'16': foo}' */
-                    path?: string | { [index: string]: string } | undefined;
-                }
-                | {
-                    /** Either an ImageData object or a dictionary {size -> ImageData} representing an icon to be set. If the icon is specified as a dictionary, the image used is chosen depending on the screen's pixel density. If the number of image pixels that fit into one screen space unit equals `scale`, then an image with size `scale` \* n is selected, where _n_ is the size of the icon in the UI. At least one image must be specified. Note that 'details.imageData = foo' is equivalent to 'details.imageData = {'16': foo}' */
-                    imageData?: ImageData | { [index: number]: ImageData } | undefined;
-                    /** Either a relative image path or a dictionary {size -> relative image path} pointing to an icon to be set. If the icon is specified as a dictionary, the image used is chosen depending on the screen's pixel density. If the number of image pixels that fit into one screen space unit equals `scale`, then an image with size `scale` \* n is selected, where _n_ is the size of the icon in the UI. At least one image must be specified. Note that 'details.path = foo' is equivalent to 'details.path = {'16': foo}' */
-                    path: string | { [index: string]: string };
-                }
-            );
+        type TabIconDetails = RequireAtLeastOne<{
+            /** Either an ImageData object or a dictionary {size -> ImageData} representing an icon to be set. If the icon is specified as a dictionary, the image used is chosen depending on the screen's pixel density. If the number of image pixels that fit into one screen space unit equals `scale`, then an image with size `scale` \* n is selected, where _n_ is the size of the icon in the UI. At least one image must be specified. Note that 'details.imageData = foo' is equivalent to 'details.imageData = {'16': foo}' */
+            imageData?: ImageData | { [index: number]: ImageData } | undefined;
+            /** Either a relative image path or a dictionary {size -> relative image path} pointing to an icon to be set. If the icon is specified as a dictionary, the image used is chosen depending on the screen's pixel density. If the number of image pixels that fit into one screen space unit equals `scale`, then an image with size `scale` \* n is selected, where _n_ is the size of the icon in the UI. At least one image must be specified. Note that 'details.path = foo' is equivalent to 'details.path = {'16': foo}' */
+            path?: string | { [index: string]: string } | undefined;
+            /** Limits the change to when a particular tab is selected. Automatically resets when the tab is closed. */
+            tabId?: number | null | undefined;
+        }, "imageData" | "path">;
 
         /** @since Chrome 99 */
         interface OpenPopupOptions {
@@ -978,25 +971,14 @@ declare namespace chrome {
             tabId?: number | null | undefined;
         }
 
-        type TabIconDetails =
-            & {
-                /** Limits the change to when a particular tab is selected. Automatically resets when the tab is closed. */
-                tabId?: number | null | undefined;
-            }
-            & (
-                | {
-                    /** Either an ImageData object or a dictionary {size -> ImageData} representing an icon to be set. If the icon is specified as a dictionary, the image used is chosen depending on the screen's pixel density. If the number of image pixels that fit into one screen space unit equals `scale`, then an image with size `scale` \* n is selected, where _n_ is the size of the icon in the UI. At least one image must be specified. Note that 'details.imageData = foo' is equivalent to 'details.imageData = {'16': foo}' */
-                    imageData: ImageData | { [index: number]: ImageData };
-                    /** Either a relative image path or a dictionary {size -> relative image path} pointing to an icon to be set. If the icon is specified as a dictionary, the image used is chosen depending on the screen's pixel density. If the number of image pixels that fit into one screen space unit equals `scale`, then an image with size `scale` \* n is selected, where _n_ is the size of the icon in the UI. At least one image must be specified. Note that 'details.path = foo' is equivalent to 'details.path = {'16': foo}' */
-                    path?: string | { [index: string]: string } | undefined;
-                }
-                | {
-                    /** Either an ImageData object or a dictionary {size -> ImageData} representing an icon to be set. If the icon is specified as a dictionary, the image used is chosen depending on the screen's pixel density. If the number of image pixels that fit into one screen space unit equals `scale`, then an image with size `scale` \* n is selected, where _n_ is the size of the icon in the UI. At least one image must be specified. Note that 'details.imageData = foo' is equivalent to 'details.imageData = {'16': foo}' */
-                    imageData?: ImageData | { [index: number]: ImageData } | undefined;
-                    /** Either a relative image path or a dictionary {size -> relative image path} pointing to an icon to be set. If the icon is specified as a dictionary, the image used is chosen depending on the screen's pixel density. If the number of image pixels that fit into one screen space unit equals `scale`, then an image with size `scale` \* n is selected, where _n_ is the size of the icon in the UI. At least one image must be specified. Note that 'details.path = foo' is equivalent to 'details.path = {'16': foo}' */
-                    path: string | { [index: string]: string };
-                }
-            );
+        type TabIconDetails = RequireAtLeastOne<{
+            /** Either an ImageData object or a dictionary {size -> ImageData} representing an icon to be set. If the icon is specified as a dictionary, the image used is chosen depending on the screen's pixel density. If the number of image pixels that fit into one screen space unit equals `scale`, then an image with size `scale` \* n is selected, where _n_ is the size of the icon in the UI. At least one image must be specified. Note that 'details.imageData = foo' is equivalent to 'details.imageData = {'16': foo}' */
+            imageData?: ImageData | { [index: number]: ImageData } | undefined;
+            /** Either a relative image path or a dictionary {size -> relative image path} pointing to an icon to be set. If the icon is specified as a dictionary, the image used is chosen depending on the screen's pixel density. If the number of image pixels that fit into one screen space unit equals `scale`, then an image with size `scale` \* n is selected, where _n_ is the size of the icon in the UI. At least one image must be specified. Note that 'details.path = foo' is equivalent to 'details.path = {'16': foo}' */
+            path?: string | { [index: string]: string } | undefined;
+            /** Limits the change to when a particular tab is selected. Automatically resets when the tab is closed. */
+            tabId?: number | null | undefined;
+        }, "imageData" | "path">;
 
         interface PopupDetails {
             /** Limits the change to when a particular tab is selected. Automatically resets when the tab is closed. */
@@ -2557,15 +2539,10 @@ declare namespace chrome {
          */
         class SetIcon {
             constructor(
-                options:
-                    | {
-                        imageData: ImageData | { [index: number]: ImageData };
-                        path?: string | { [index: number]: string } | undefined;
-                    }
-                    | {
-                        imageData?: ImageData | { [index: number]: ImageData } | undefined;
-                        path: string | { [index: number]: string };
-                    },
+                options: RequireAtLeastOne<{
+                    imageData?: ImageData | { [index: number]: ImageData } | undefined;
+                    path?: string | { [index: number]: string } | undefined;
+                }, "imageData" | "path">,
             );
         }
 
@@ -8088,27 +8065,16 @@ declare namespace chrome {
             popup: string;
         }
 
-        type IconDetails =
-            & {
-                /** @deprecated This argument is ignored. */
-                iconIndex?: number | undefined;
-                /** The id of the tab for which you want to modify the page action. */
-                tabId: number;
-            }
-            & (
-                | {
-                    /** Either an ImageData object or a dictionary {size -> ImageData} representing icon to be set. If the icon is specified as a dictionary, the actual image to be used is chosen depending on screen's pixel density. If the number of image pixels that fit into one screen space unit equals `scale`, then image with size `scale` \* n will be selected, where n is the size of the icon in the UI. At least one image must be specified. Note that 'details.imageData = foo' is equivalent to 'details.imageData = {'16': foo}' */
-                    imageData: ImageData | { [index: number]: ImageData };
-                    /** Either a relative image path or a dictionary {size -> relative image path} pointing to icon to be set. If the icon is specified as a dictionary, the actual image to be used is chosen depending on screen's pixel density. If the number of image pixels that fit into one screen space unit equals `scale`, then image with size `scale` \* n will be selected, where n is the size of the icon in the UI. At least one image must be specified. Note that 'details.path = foo' is equivalent to 'details.path = {'16': foo}' */
-                    path?: string | { [index: string]: string } | undefined;
-                }
-                | {
-                    /** Either an ImageData object or a dictionary {size -> ImageData} representing icon to be set. If the icon is specified as a dictionary, the actual image to be used is chosen depending on screen's pixel density. If the number of image pixels that fit into one screen space unit equals `scale`, then image with size `scale` \* n will be selected, where n is the size of the icon in the UI. At least one image must be specified. Note that 'details.imageData = foo' is equivalent to 'details.imageData = {'16': foo}' */
-                    imageData?: ImageData | { [index: number]: ImageData } | undefined;
-                    /** Either a relative image path or a dictionary {size -> relative image path} pointing to icon to be set. If the icon is specified as a dictionary, the actual image to be used is chosen depending on screen's pixel density. If the number of image pixels that fit into one screen space unit equals `scale`, then image with size `scale` \* n will be selected, where n is the size of the icon in the UI. At least one image must be specified. Note that 'details.path = foo' is equivalent to 'details.path = {'16': foo}' */
-                    path: string | { [index: string]: string };
-                }
-            );
+        type IconDetails = RequireAtLeastOne<{
+            /** @deprecated This argument is ignored. */
+            iconIndex?: number | undefined;
+            /** Either an ImageData object or a dictionary {size -> ImageData} representing icon to be set. If the icon is specified as a dictionary, the actual image to be used is chosen depending on screen's pixel density. If the number of image pixels that fit into one screen space unit equals `scale`, then image with size `scale` \* n will be selected, where n is the size of the icon in the UI. At least one image must be specified. Note that 'details.imageData = foo' is equivalent to 'details.imageData = {'16': foo}' */
+            imageData?: ImageData | { [index: number]: ImageData } | undefined;
+            /** Either a relative image path or a dictionary {size -> relative image path} pointing to icon to be set. If the icon is specified as a dictionary, the actual image to be used is chosen depending on screen's pixel density. If the number of image pixels that fit into one screen space unit equals `scale`, then image with size `scale` \* n will be selected, where n is the size of the icon in the UI. At least one image must be specified. Note that 'details.path = foo' is equivalent to 'details.path = {'16': foo}' */
+            path?: string | { [index: string]: string } | undefined;
+            /** The id of the tab for which you want to modify the page action. */
+            tabId: number;
+        }, "imageData" | "path">;
 
         /**
          * Hides the page action. Hidden page actions still appear in the Chrome toolbar, but are grayed out.
@@ -10016,14 +9982,12 @@ declare namespace chrome {
             /** Defines files within the extension that can be accessed by web pages or other extensions. */
             web_accessible_resources?:
                 | Array<
-                    & {
+                    RequireAtLeastOne<{
+                        extension_ids?: string[] | undefined;
+                        matches?: string[] | undefined;
                         resources: string[];
                         use_dynamic_url?: boolean | undefined;
-                    }
-                    & (
-                        | { extension_ids: string[]; matches?: string[] | undefined }
-                        | { matches: string[]; extension_ids?: string[] | undefined }
-                    )
+                    }, "extension_ids" | "matches">
                 >
                 | undefined;
         }
@@ -10420,45 +10384,34 @@ declare namespace chrome {
             );
 
         /** @since Chrome 96 */
-        type RegisteredContentScript =
-            & {
-                /** The id of the content script, specified in the API call. Must not start with a '_' as it's reserved as a prefix for generated script IDs. */
-                id: string;
-                /** If specified true, it will inject into all frames, even if the frame is not the top-most frame in the tab. Each frame is checked independently for URL requirements; it will not inject into child frames if the URL requirements are not met. Defaults to false, meaning that only the top frame is matched. */
-                allFrames?: boolean | undefined;
-                /** Excludes pages that this content script would otherwise be injected into. See Match Patterns for more details on the syntax of these strings. */
-                excludeMatches?: string[] | undefined;
-                /**
-                 * Indicates whether the script can be injected into frames where the URL contains an unsupported scheme; specifically: about:, data:, blob:, or filesystem:. In these cases, the URL's origin is checked to determine if the script should be injected. If the origin is `null` (as is the case for data: URLs) then the used origin is either the frame that created the current frame or the frame that initiated the navigation to this frame. Note that this may not be the parent frame.
-                 * @since Chrome 119
-                 */
-                matchOriginAsFallback?: boolean | undefined;
-                /** Specifies which pages this content script will be injected into. See Match Patterns for more details on the syntax of these strings. Must be specified for {@link registerContentScripts}. */
-                matches?: string[] | undefined;
-                /** Specifies if this content script will persist into future sessions. The default is true. */
-                persistAcrossSessions?: boolean | undefined;
-                /** Specifies when JavaScript files are injected into the web page. The preferred and default value is `document_idle`. */
-                runAt?: extensionTypes.RunAt | undefined;
-                /**
-                 * he JavaScript "world" to run the script in. Defaults to `ISOLATED`.
-                 * @since Chrome 102
-                 */
-                world?: `${ExecutionWorld}` | undefined;
-            }
-            & (
-                | {
-                    /** The list of JavaScript files to be injected into matching pages. These are injected in the order they appear in this array. */
-                    js: string[];
-                    /** The list of CSS files to be injected into matching pages. These are injected in the order they appear in this array, before any DOM is constructed or displayed for the page. */
-                    css?: string[] | undefined;
-                }
-                | {
-                    /** The list of JavaScript files to be injected into matching pages. These are injected in the order they appear in this array. */
-                    js?: string[] | undefined;
-                    /** The list of CSS files to be injected into matching pages. These are injected in the order they appear in this array, before any DOM is constructed or displayed for the page. */
-                    css: string[];
-                }
-            );
+        type RegisteredContentScript = RequireAtLeastOne<{
+            /** The id of the content script, specified in the API call. Must not start with a '_' as it's reserved as a prefix for generated script IDs. */
+            id: string;
+            /** If specified true, it will inject into all frames, even if the frame is not the top-most frame in the tab. Each frame is checked independently for URL requirements; it will not inject into child frames if the URL requirements are not met. Defaults to false, meaning that only the top frame is matched. */
+            allFrames?: boolean | undefined;
+            /** The list of CSS files to be injected into matching pages. These are injected in the order they appear in this array, before any DOM is constructed or displayed for the page. */
+            css?: string[] | undefined;
+            /** Excludes pages that this content script would otherwise be injected into. See Match Patterns for more details on the syntax of these strings. */
+            excludeMatches?: string[] | undefined;
+            /** The list of JavaScript files to be injected into matching pages. These are injected in the order they appear in this array. */
+            js?: string[] | undefined;
+            /**
+             * Indicates whether the script can be injected into frames where the URL contains an unsupported scheme; specifically: about:, data:, blob:, or filesystem:. In these cases, the URL's origin is checked to determine if the script should be injected. If the origin is `null` (as is the case for data: URLs) then the used origin is either the frame that created the current frame or the frame that initiated the navigation to this frame. Note that this may not be the parent frame.
+             * @since Chrome 119
+             */
+            matchOriginAsFallback?: boolean | undefined;
+            /** Specifies which pages this content script will be injected into. See Match Patterns for more details on the syntax of these strings. Must be specified for {@link registerContentScripts}. */
+            matches?: string[] | undefined;
+            /** Specifies if this content script will persist into future sessions. The default is true. */
+            persistAcrossSessions?: boolean | undefined;
+            /** Specifies when JavaScript files are injected into the web page. The preferred and default value is `document_idle`. */
+            runAt?: extensionTypes.RunAt | undefined;
+            /**
+             * he JavaScript "world" to run the script in. Defaults to `ISOLATED`.
+             * @since Chrome 102
+             */
+            world?: `${ExecutionWorld}` | undefined;
+        }, "css" | "js">;
 
         /** @since Chrome 96 */
         interface ContentScriptFilter {
@@ -15115,19 +15068,12 @@ declare namespace chrome {
      */
     export namespace sidePanel {
         /** @since Chrome 141 */
-        type CloseOptions =
-            | {
-                /** The tab in which to close the side panel. If a tab-specific side panel is open in the specified tab, it will be closed for that tab. If only the global side panel is open, the promise returned by the call to `close()` will reject with an error. This behavior was changed in Chrome 145, with prior versions falling back to closing the global panel. At least one of this or `windowId` must be provided. */
-                tabId: number;
-                /** The window in which to close the side panel. If a global side panel is open in the specified window, it will be closed for all tabs in that window where no tab-specific panel is active. At least one of this or `tabId` must be provided. */
-                windowId?: number | undefined;
-            }
-            | {
-                /** The tab in which to close the side panel. If a tab-specific side panel is open in the specified tab, it will be closed for that tab. If only the global side panel is open, the promise returned by the call to `close()` will reject with an error. This behavior was changed in Chrome 145, with prior versions falling back to closing the global panel. At least one of this or `windowId` must be provided. */
-                tabId?: number | undefined;
-                /** The window in which to close the side panel. If a global side panel is open in the specified window, it will be closed for all tabs in that window where no tab-specific panel is active. At least one of this or `tabId` must be provided. */
-                windowId: number;
-            };
+        type CloseOptions = RequireAtLeastOne<{
+            /** The tab in which to close the side panel. If a tab-specific side panel is open in the specified tab, it will be closed for that tab. If only the global side panel is open, the promise returned by the call to `close()` will reject with an error. This behavior was changed in Chrome 145, with prior versions falling back to closing the global panel. At least one of this or `windowId` must be provided. */
+            tabId?: number | undefined;
+            /** The window in which to close the side panel. If a global side panel is open in the specified window, it will be closed for all tabs in that window where no tab-specific panel is active. At least one of this or `tabId` must be provided. */
+            windowId?: number | undefined;
+        }, "tabId" | "windowId">;
 
         interface GetPanelOptions {
             /**
@@ -15138,28 +15084,22 @@ declare namespace chrome {
         }
 
         /** @since Chrome 116 */
-        type OpenOptions =
-            & {
-                /**
-                 * The tab in which to open the side panel.
-                 * If the corresponding tab has a tab-specific side panel, the panel will only be open for that tab.
-                 * If there is not a tab-specific panel, the global panel will be open in the specified tab and any other tabs without a currently-open tab-specific panel.
-                 * This will override any currently-active side panel (global or tab-specific) in the corresponding tab.
-                 * At least one of this and `windowId` must be provided. */
-                tabId?: number | undefined;
-                /**
-                 * The window in which to open the side panel.
-                 * This is only applicable if the extension has a global (non-tab-specific) side panel or `tabId` is also specified.
-                 * This will override any currently-active global side panel the user has open in the given window.
-                 * At least one of this and `tabId` must be provided.
-                 */
-                windowId?: number | undefined;
-            }
-            & ({
-                tabId: number;
-            } | {
-                windowId: number;
-            });
+        type OpenOptions = RequireAtLeastOne<{
+            /**
+             * The tab in which to open the side panel.
+             * If the corresponding tab has a tab-specific side panel, the panel will only be open for that tab.
+             * If there is not a tab-specific panel, the global panel will be open in the specified tab and any other tabs without a currently-open tab-specific panel.
+             * This will override any currently-active side panel (global or tab-specific) in the corresponding tab.
+             * At least one of this and `windowId` must be provided. */
+            tabId?: number | undefined;
+            /**
+             * The window in which to open the side panel.
+             * This is only applicable if the extension has a global (non-tab-specific) side panel or `tabId` is also specified.
+             * This will override any currently-active global side panel the user has open in the given window.
+             * At least one of this and `tabId` must be provided.
+             */
+            windowId?: number | undefined;
+        }, "tabId" | "windowId">;
 
         interface PanelBehavior {
             /** Whether clicking the extension's icon will toggle showing the extension's entry in the side panel. Defaults to false. */
