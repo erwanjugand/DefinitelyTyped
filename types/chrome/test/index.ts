@@ -8710,4 +8710,8 @@ function testInternalHelpers() {
     type GlobalRequireExactlyOne = RequireExactlyOne<{ a?: string }, "a">;
     // @ts-expect-error
     type ChromeRequireExactlyOne = chrome.RequireExactlyOne<{ a?: string }, "a">;
+    // @ts-expect-error
+    type GlobalRequireAtMostOne = RequireAtMostOne<{ a?: string }, "a">;
+    // @ts-expect-error
+    type ChromeRequireAtMostOne = chrome.RequireAtMostOne<{ a?: string }, "a">;
 }

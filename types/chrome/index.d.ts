@@ -37,6 +37,10 @@ declare namespace chrome {
     type RequireExactlyOne<T, K extends keyof T> =
         & Flatten<Omit<T, K>>
         & { [P in K]-?: Flatten<SetRequired<Pick<T, P>, P> & { [Q in keyof Pick<T, Exclude<K, P>>]?: undefined }> }[K];
+    /** At most one of `K` can be set, the others must be omitted or `undefined`. */
+    type RequireAtMostOne<T, K extends keyof T> =
+        & Flatten<Omit<T, K>>
+        & { [P in K]-?: Flatten<Pick<T, P> & { [Q in keyof Pick<T, Exclude<K, P>>]?: undefined }> }[K];
 
     ////////////////////
     // Accessibility Features
@@ -9198,25 +9202,14 @@ declare namespace chrome {
             NEW_WINDOW = "NEW_WINDOW",
         }
 
-        type QueryInfo =
-            & {
-                /** String to query with the default search provider. */
-                text: string;
-            }
-            & (
-                | {
-                    /** Location where search results should be displayed. `CURRENT_TAB` is the default. */
-                    disposition?: `${Disposition}` | undefined;
-                    /** Location where search results should be displayed. `tabId` cannot be used with `disposition`. */
-                    tabId?: undefined;
-                }
-                | {
-                    /** Location where search results should be displayed. `CURRENT_TAB` is the default. */
-                    disposition?: undefined;
-                    /** Location where search results should be displayed. `tabId` cannot be used with `disposition`. */
-                    tabId?: number | undefined;
-                }
-            );
+        type QueryInfo = RequireAtMostOne<{
+            /** Location where search results should be displayed. `CURRENT_TAB` is the default. */
+            disposition?: `${Disposition}` | undefined;
+            /** Location where search results should be displayed. `tabId` cannot be used with `disposition`. */
+            tabId?: number | undefined;
+            /** String to query with the default search provider. */
+            text: string;
+        }, "disposition" | "tabId">;
 
         /**
          * Used to query the default search provider. In case of an error, {@link runtime.lastError} will be set.
