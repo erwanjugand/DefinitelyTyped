@@ -1586,6 +1586,8 @@ function testDeclarativeContent() {
     new chrome.declarativeContent.SetIcon();
     // @ts-expect-error Uncaught Error: Either the path or imageData property must be specified
     new chrome.declarativeContent.SetIcon({});
+    // @ts-expect-error Uncaught Error: The imageData property must contain an ImageData object or dictionary of ImageData objects.
+    new chrome.declarativeContent.SetIcon({ imageData: undefined });
 
     const action = new chrome.declarativeContent.ShowAction(); // $ExpectType ShowAction
 
@@ -2604,6 +2606,7 @@ function testSearch() {
     chrome.search.query(queryInfo1, () => {}); // $ExpectType void
     chrome.search.query(queryInfo2); // $ExpectType Promise<void>
     chrome.search.query(queryInfo2, () => {}); // $ExpectType void
+    chrome.search.query({ text: "text" }); // $ExpectType Promise<void>
     // @ts-expect-error
     chrome.search.query(queryInfo1, () => {}).then(() => {});
 }
@@ -2681,6 +2684,7 @@ function testBrowserAction() {
     chrome.browserAction.setIcon(iconDetails2); // $ExpectType void
     chrome.browserAction.setIcon(iconDetails, () => void 0); // $ExpectType void
     chrome.browserAction.setIcon(iconDetails2, () => void 0); // $ExpectType void
+    chrome.browserAction.setIcon({ imageData: new ImageData(16, 16), path: "path/to/icon.png" }); // $ExpectType void
     // @ts-expect-error Either the path or imageData property must be specified.
     chrome.browserAction.setIcon({});
 
@@ -2830,6 +2834,9 @@ async function testAction() {
 
     chrome.action.setIcon(iconDetails); // $ExpectType Promise<void>
     chrome.action.setIcon(iconDetails2, () => {}); // $ExpectType void
+    chrome.action.setIcon({ imageData: new ImageData(16, 16), path: "path/to/icon.png" }); // $ExpectType Promise<void>
+    // @ts-expect-error Either the path or imageData property must be specified.
+    chrome.action.setIcon({ tabId });
     // @ts-expect-error
     chrome.action.setIcon(() => {}).then(() => {});
 
@@ -3392,6 +3399,8 @@ async function testScripting() {
     chrome.scripting.getRegisteredContentScripts(contentScriptFilter); // $ExpectType Promise<RegisteredContentScript[]>
     chrome.scripting.getRegisteredContentScripts((scripts) => { // $ExpectType void
         scripts; // $ExpectType RegisteredContentScript[]
+        scripts[0].css; // $ExpectType string[] | undefined
+        scripts[0].js; // $ExpectType string[] | undefined
     });
     chrome.scripting.getRegisteredContentScripts(contentScriptFilter, (scripts) => { // $ExpectType void
         scripts; // $ExpectType RegisteredContentScript[]
@@ -3416,6 +3425,8 @@ async function testScripting() {
 
     chrome.scripting.registerContentScripts([registeredContentScript]); // $ExpectType Promise<void>
     chrome.scripting.registerContentScripts([registeredContentScript], () => {}); // $ExpectType void
+    chrome.scripting.registerContentScripts([{ id: "id", js: ["script.js"], matches: ["*://*/*"] }]); // $ExpectType Promise<void>
+    chrome.scripting.registerContentScripts([{ id: "id", css: ["style.css"], matches: ["*://*/*"] }]); // $ExpectType Promise<void>
     // @ts-expect-error must specify at least one js or css file.
     chrome.scripting.registerContentScripts([{ id: "id", matches: ["*://*.example.com/*"] }], () => {});
     // @ts-expect-error
@@ -5400,8 +5411,11 @@ function testPageAction() {
     chrome.pageAction.setIcon(iconDetails2); // $ExpectType void
     chrome.pageAction.setIcon(iconDetails, () => void 0); // $ExpectType void
     chrome.pageAction.setIcon(iconDetails2, () => void 0); // $ExpectType void
+    chrome.pageAction.setIcon({ tabId, imageData: new ImageData(16, 16), path: "path/to/icon.png" }); // $ExpectType void
     // @ts-expect-error Either the path or imageData property must be specified.
     chrome.pageAction.setIcon({});
+    // @ts-expect-error Either the path or imageData property must be specified.
+    chrome.pageAction.setIcon({ tabId });
 
     const popupDetails: chrome.pageAction.PopupDetails = {
         popup: "popup.html",
@@ -6749,6 +6763,10 @@ function testSidePanel() {
 
     chrome.sidePanel.close(closeOptions); // $ExpectType Promise<void>
     chrome.sidePanel.close(closeOptions, () => void 0); // $ExpectType void
+    chrome.sidePanel.close({ windowId: 1 }); // $ExpectType Promise<void>
+    chrome.sidePanel.close({ tabId: 1, windowId: 1 }); // $ExpectType Promise<void>
+    // @ts-expect-error At least one of 'tabId' and 'windowId' must be provided.
+    chrome.sidePanel.close({});
     // @ts-expect-error
     chrome.sidePanel.close(closeOptions, () => {}).then(() => {});
 
@@ -6798,6 +6816,8 @@ function testSidePanel() {
     chrome.sidePanel.open(openOptionsTab, () => void 0); // $ExpectType void
     chrome.sidePanel.open(openOptionsWindow, () => void 0); // $ExpectType void
     chrome.sidePanel.open(openOptionsTabAndWindow, () => void 0); // $ExpectType void
+    // @ts-expect-error At least one of 'tabId' and 'windowId' must be provided.
+    chrome.sidePanel.open({});
 
     const setPanelOptions: chrome.sidePanel.PanelOptions = {
         enabled: true,
@@ -6938,6 +6958,11 @@ function testUserScripts() {
         world: "MAIN",
         worldId: "customId",
     };
+
+    // @ts-expect-error Exactly one of 'code' and 'file' must be specified.
+    const scriptSourceNone: chrome.userScripts.ScriptSource = {};
+    // @ts-expect-error Exactly one of 'code' and 'file' must be specified.
+    const scriptSourceBoth: chrome.userScripts.ScriptSource = { code: "console.log()", file: "script.js" };
 
     chrome.userScripts.execute(injection); // $ExpectType Promise<InjectionResult<unknown>[]>
     chrome.userScripts.execute(injection, ([result]) => { // $ExpectType void
